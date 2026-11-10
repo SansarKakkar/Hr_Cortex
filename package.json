@@ -1,0 +1,8 @@
+{
+  "name": "hr-agent",
+  "private": true,
+  "workspaces": [
+    "server",
+    "client"
+  ]
+}
