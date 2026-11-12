@@ -12,6 +12,7 @@ model Department {
   key   String @unique
   name  String
   email String @unique
+  documents PolicyDocument[]
 }
 model Employee {
   id          Int     @id @default(autoincrement())
@@ -25,4 +26,22 @@ model Employee {
   countryCode String
 
   @@index([countryCode])
+}
+model PolicyDocument {
+  id                Int         @id @default(autoincrement())
+  recordId          String      @unique
+  baseCode          String
+  countryCode       String
+  country           String
+  title             String
+  docType           String
+  category          String
+  filename          String
+  keywords          String[]
+  version           Int
+  active            Boolean
+  ownerDepartment   Department  @relation(fields: [ownerDepartmentId], references: [id])
+  ownerDepartmentId Int
+
+  @@index([countryCode, active])
 }
