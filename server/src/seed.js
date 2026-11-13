@@ -11,7 +11,8 @@ const COUNTRY_CODES={
     Argentina:"AR",
     Brazil:"BR",
     Pakistan:"PK",
-    USA:"US"
+    USA:"US",
+    "United States": "US",
 }
 const employees=rows.map((r)=>({
     employeeId: r.employee_id,
@@ -58,6 +59,40 @@ for(const d of departments.values()){
         create:d,
     });
 }
+const dbDepartments = await prisma.department.findMany();
+const departmentIds = new Map(dbDepartments.map((d) => [d.key, d.id]));
+
+const documents = docRows.map((r) => ({
+  recordId: r.record_id,
+  baseCode: r.base_code,
+  countryCode: COUNTRY_CODES[r.country],
+  country:r.country,
+  title: r.title,
+  docType: r.doc_type,
+  category: r.category,
+  filename: r.filename,
+  keywords: r.keywords.split("|").map((k) => k.trim()),
+  version: Number(r.version),
+  active: r.active.toLowerCase() === "true",
+  ownerDepartmentId: departmentIds.get(r.mailbox_function),
+}));
+
+const bad = documents.filter((d) => !d.countryCode || !d.ownerDepartmentId);
+if (bad.length > 0) {
+  console.error("Bad documents:", bad.map((d) => d.recordId));
+  process.exit(1);
+}
+
+for(const d of documents){
+    await prisma.policyDocument.upsert({
+        where:{recordId:d.recordId},
+        update:d,
+        create:d,
+    })
+}
+console.log(`Seeded ${documents.length} documents`);
+console.log(documents.length);
+console.log(documents[0]);
 console.log(`Seeded ${employees.length} employees`);
 console.log(`Seeded ${departments.size} departments`);
 await prisma.$disconnect();
